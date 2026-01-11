@@ -1,0 +1,67 @@
+version: '3.8'
+
+services:
+  pz-server:
+    container_name: ${CONTAINER_NAME}
+    
+    # --- 构建配置 ---
+    build:
+      context: .
+      dockerfile: Dockerfile
+      # 构建时使用宿主机网络
+      network: host 
+      args:
+        # 传递 .env 里的代理和源设置
+        http_proxy: ${PROXY_URL}
+        https_proxy: ${PROXY_URL}
+        USE_CN_MIRROR: ${USE_CN_MIRROR}
+
+    # --- 端口映射 ---
+    ports:
+      # 游戏端口
+      - "${PORT_GAME_UDP}:16261/udp"
+      - "${PORT_GAME_HANDSHAKE}:16262/udp"
+      # Web 管理端口
+      - "${PORT_FILEBROWSER_EXT}:35088"
+      - "${PORT_GAME_SETTING_EXT}:10888"
+
+    # --- 环境变量 ---
+    environment:
+      - TZ=Asia/Shanghai
+      - http_proxy=${PROXY_URL}
+      - https_proxy=${PROXY_URL}
+      # HTTPS 配置
+      - SSL_MODE=${SSL_MODE}
+      - DOMAIN_NAME=${DOMAIN_NAME}
+      - CF_Token=${CF_TOKEN}
+      - CF_Account_ID=${CF_ACCOUNT_ID}
+      - SSL_CERT_PATH=${SSL_CERT_PATH}
+      - SSL_KEY_PATH=${SSL_KEY_PATH}
+      # 游戏配置
+      - PZ_BRANCH=${PZ_BRANCH}
+
+    # --- 卷挂载 ---
+    volumes:
+      # 存档与配置
+      # 宿主机 ./data/zomboid -> 容器 /home/steam/Zomboid
+      - ./data/zomboid:/home/steam/Zomboid
+
+      # 游戏本体
+      # 宿主机 ./data/game -> 容器 /opt/pzserver
+      - ./data/game:/opt/pzserver
+
+      # FileBrowser 数据库
+      # 宿主机 ./data/filebrowser -> 容器 /opt/filebrowser
+      - ./data/filebrowser:/opt/filebrowser
+
+      # Web 后端的数据目录
+      - ./data/web-backend:/opt/pz-web-backend
+
+      # 映射宿主机的 ./certs 目录到容器内的 /certs
+      # 注意，该目录下应包含 cert.pem 和 key.pem 这样的证书文件。
+      # 如果你使用域名申请了证书的话，申请后的证书最终会放在这里供Nginx使用，这里有证书会跳过HTTPS申请步骤
+      # 如果你直接提供证书放在下面，并且正确设置好SSL_KEY和SSL_CERT变量，则会直接使用这些证书作为HTTPS证书
+      - ./certs:/certs
+
+    # --- 重启策略 ---
+    restart: unless-stopped
