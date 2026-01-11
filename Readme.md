@@ -191,6 +191,14 @@ docker-compsoe up -d
 
 `Web 设置面板`: 删除容器内的 /etc/nginx/.htpasswd (或进入容器执行 rm /etc/nginx/.htpasswd) 然后重启。
 
+### Q5: Web配置面板问题
+
+关于面板，我单独拆分出了一个[仓库](https://github.com/Asteroid77/pz-web-backend)。
+
+有什么问题可以去那边提。
+
+如果你科学上网工具质量不太好，经常触发`Github`的风控，想要更新新版的面板，可以直接从面板仓库那边的Release中下载build好的版本放到`data/web-backend`下面自行更名替换，也可以改了后自己编译自己替换。
+
 ## 📝 4. License
 
 MIT License
