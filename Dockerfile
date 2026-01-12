@@ -82,11 +82,24 @@ ENV LC_ALL=en_US.UTF-8
 
 # 获取FileBrowser
 RUN ARCH=$(dpkg --print-architecture) && \
-    echo "Detected architecture: $ARCH" && \
-    if [ "$ARCH" = "amd64" ]; then FB_ARCH="linux-amd64"; \
-    elif [ "$ARCH" = "arm64" ]; then FB_ARCH="linux-arm64"; \
-    else echo "Unsupported architecture" && exit 1; fi && \
-    curl -fsSL "https://github.com/filebrowser/filebrowser/releases/latest/download/$FB_ARCH-filebrowser.tar.gz" | tar -xz -C /usr/local/bin filebrowser && \
+    case "$ARCH" in \
+        "amd64") FB_ARCH="linux-amd64" ;; \
+        "arm64") FB_ARCH="linux-arm64" ;; \
+        *) echo "Unsupported architecture: $ARCH"; exit 1 ;; \
+    esac && \
+    \
+    # 定义基础 URL
+    FB_URL="https://github.com/filebrowser/filebrowser/releases/latest/download/$FB_ARCH-filebrowser.tar.gz" && \
+    \
+    # 根据构建参数决定是否添加代理前缀
+    if [ "$GITHUB_PROXY_URL" != "" ]; then \
+        DOWNLOAD_URL="$GITHUB_PROXY_URL/$FB_URL"; \
+    else \
+        DOWNLOAD_URL="$FB_URL"; \
+    fi && \
+    \
+    echo "Downloading FileBrowser from: $DOWNLOAD_URL" && \
+    curl -fsSL "$DOWNLOAD_URL" | tar -xz -C /usr/local/bin filebrowser && \
     chmod +x /usr/local/bin/filebrowser
 
 # 用户与目录
@@ -105,22 +118,27 @@ RUN useradd -m -d /home/steam -s /bin/bash steam && \
     chown -R steam:steam /home/steam ${PZ_INSTALL_DIR} /certs /opt/filebrowser /opt/pz-web-backend
 
 # 手动安装 SteamCMD
-# 直接从官网下载解压，没有代理的话可能会很慢。
 WORKDIR /home/steam/steamcmd
 USER steam
-RUN curl -sqL "https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz" | tar zxvf -
-RUN ./steamcmd.sh +quit
+RUN \
+    # 定义 URL 变量
+    OFFICIAL_URL="https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz" && \
+    CN_URL="https://media.st.dl.eccdnx.com/client/installer/steamcmd_linux.tar.gz" && \
+    \
+    # 根据参数选择 URL
+    if [ "$USE_CN_MIRROR" = "true" ]; then \
+        echo "Using Steam China CDN..." && \
+        DOWNLOAD_URL="$CN_URL"; \
+    else \
+        echo "Using International CDN..." && \
+        DOWNLOAD_URL="$OFFICIAL_URL"; \
+    fi && \
+    \
+    # 下载并解压
+    echo "Downloading SteamCMD from: $DOWNLOAD_URL" && \
+    curl -fsSL "$DOWNLOAD_URL" | tar -zxvf -
 
-# 下载僵毁
-RUN --mount=type=cache,target=/home/steam/Steam,uid=1000,gid=1000 \
-    ./steamcmd.sh +login anonymous +quit && \
-    ./steamcmd.sh \
-    +force_install_dir ${PZ_INSTALL_DIR} \
-    +login anonymous \
-    +app_update 380870 validate \
-    +quit
-# 清理下载缓存
-RUN rm -rf /home/steam/Steam/appcache/*
+
 
 # 配置文件注入
 # 切换用户
@@ -139,10 +157,22 @@ ENV PZ_BRANCH="public"
 # 设置游戏设置Web服务相关内容
 ENV PZ_SETTING_WEB_REPO="Asteroid77/pz-web-backend"
 # 下载游戏配置页面后台二进制文件
-RUN apt-get update && apt-get install -y curl jq && \
-    LATEST_URL=$(curl -s "https://api.github.com/repos/${PZ_SETTING_WEB_REPO}/releases/latest" | jq -r '.assets[] | select(.name | contains("linux-amd64")) | .browser_download_url') && \
-    echo "Downloading from: $LATEST_URL" && \
-    curl -L "$LATEST_URL" -o /usr/local/share/pz-web-backend-default && \
+ENV PZ_WEB_BACKEND_FILENAME="pz-web-backend_linux_amd64"
+
+RUN \
+    # 构造 "Magic URL" (GitHub 会自动重定向到最新版)
+    MAGIC_URL="https://github.com/${PZ_SETTING_WEB_REPO}/releases/latest/download/${PZ_WEB_BACKEND_FILENAME}" && \
+    \
+    # 加上你的镜像前缀 (镜像站通常支持这种 release 链接)
+    if [ -n "$GITHUB_PROXY_URL" ]; then \
+        DOWNLOAD_URL="${GITHUB_PROXY_URL}${MAGIC_URL}"; \
+    else \
+        DOWNLOAD_URL="$MAGIC_URL"; \
+    fi && \
+    \
+    echo "Downloading latest version from: $DOWNLOAD_URL" && \
+    # 注意：curl -L 会自动跟随 GitHub 的重定向
+    curl -L "$DOWNLOAD_URL" -o /usr/local/share/pz-web-backend-default && \
     chmod +x /usr/local/share/pz-web-backend-default
 
 # 暴露端口：游戏UDP + FileBrowser Web + 游戏配置页面

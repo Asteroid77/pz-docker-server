@@ -3,6 +3,12 @@ version: '3.8'
 services:
   pz-server:
     container_name: ${CONTAINER_NAME}
+
+     # --- DNS 配置 ---
+    # 强制容器使用国内大厂 DNS，防止默认 DNS 污染导致 Steam 无法解析
+    dns:
+      - ${DNS_SERVER_1}
+      - ${DNS_SERVER_2}
     
     # --- 构建配置 ---
     build:
@@ -21,24 +27,36 @@ services:
       # 游戏端口
       - "${PORT_GAME_UDP}:16261/udp"
       - "${PORT_GAME_HANDSHAKE}:16262/udp"
-      # Web 管理端口
-      - "${PORT_FILEBROWSER_EXT}:35088"
-      - "${PORT_GAME_SETTING_EXT}:10888"
+      # Nginx转发端口
+      # Web面板访问 10888，没有开启https时使用
+      - "${PORT_GAME_SETTING_EXT}:80"
+      # 开启https后，需要转发给容器内的 443，同时注释掉上面的80
+      # - "${PORT_GAME_SETTING_EXT}:443"
 
     # --- 环境变量 ---
     environment:
       - TZ=Asia/Shanghai
-      - http_proxy=${PROXY_URL}
-      - https_proxy=${PROXY_URL}
-      # HTTPS 配置
+      # 代理配置
+      # - http_proxy=${PROXY_URL}
+      # - https_proxy=${PROXY_URL}
+      # HTTPS / SSL 配置
       - SSL_MODE=${SSL_MODE}
       - DOMAIN_NAME=${DOMAIN_NAME}
       - CF_Token=${CF_TOKEN}
       - CF_Account_ID=${CF_ACCOUNT_ID}
-      - SSL_CERT_PATH=${SSL_CERT_PATH}
-      - SSL_KEY_PATH=${SSL_KEY_PATH}
+      - SSL_CERT=${SSL_CERT}
+      - SSL_KEY=${SSL_KEY}
       # 游戏配置
       - PZ_BRANCH=${PZ_BRANCH}
+      # PZ Web 面板账号配置
+      - PZ_WEB_ACCOUNT=${PZ_WEB_ACCOUNT}
+      - PZ_WEB_PASSWORD=${PZ_WEB_PASSWORD}
+      # 游戏更新相关
+      - STEAMCMD_CN_MIRROR_ID=${STEAMCMD_CN_MIRROR_ID}
+      - PZ_BRANCH=${PZ_BRANCH}
+      # FileBrowser 账号配置
+      - FILEBROWSER_ADMIN_USERNAME=${FILEBROWSER_ADMIN_USERNAME}
+      - FILEBROWSER_ADMIN_PASSWORD=${FILEBROWSER_ADMIN_PASSWORD}
 
     # --- 卷挂载 ---
     volumes:
@@ -56,6 +74,9 @@ services:
 
       # Web 后端的数据目录
       - ./data/web-backend:/opt/pz-web-backend
+
+      # Steam持久化，主要是登录缓存的持久化，这样只需要忍受第一次登录流程，后续直接拿着config/loginusers.vdf握手
+      - ./data/steamcmd_config:/home/steam/Steam
 
       # 映射宿主机的 ./certs 目录到容器内的 /certs
       # 注意，该目录下应包含 cert.pem 和 key.pem 这样的证书文件。

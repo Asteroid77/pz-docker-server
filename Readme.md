@@ -49,8 +49,8 @@ cd pz-docker-server
 | `PORT_GAME_HANDSHAKE`        | `16262`               | **握手端口 (UDP)**。用于 Steam 查询和直连。                  |
 | `PORT_FILEBROWSER_EXT`       | `35088`               | **文件管理器端口**。用于直接访问 FileBrowser（如不走 Nginx）。 |
 | `PORT_GAME_SETTING_EXT`      | `10888`               | **Web 面板端口**。用于直接访问配置管理后台（如不走 Nginx）。 |
-| `FILEBROSWER_ADMIN_USERNAME` | `pzFileAdmin`         | FileBrowser 的默认管理员用户名。                             |
-| `FILEBROSWER_ADMIN_PASSWORD` | `Adminadmin123`       | FileBrowser 的默认管理员密码。<br>⚠️ **注意**：必须 **>8位** 且包含字母数字，足够复杂，否则服务会启动失败。 |
+| `FILEBROWSER_ADMIN_USERNAME` | `pzFileAdmin`         | FileBrowser 的默认管理员用户名。                             |
+| `FILEBROWSER_ADMIN_PASSWORD` | `Adminadmin123`       | FileBrowser 的默认管理员密码。<br>⚠️ **注意**：必须 **>8位** 且包含字母数字，足够复杂，否则服务会启动失败。 |
 
 #### 🛠️ 构建与网络 (Build & Network)
 
@@ -148,8 +148,8 @@ docker-compsoe up -d
 
   * 地址： https://你的域名/file (或 https://服务器IP/file)
   * 安全验证：自带有一套权限系统
-  * 用户：`.env` 中的 `FILEBROSWER_ADMIN_USERNAME`
-  * 密码：`.env`中的`FILEBROSWER_ADMIN_PASSWORD`
+  * 用户：`.env` 中的 `FILEBROWSER_ADMIN_USERNAME`
+  * 密码：`.env`中的`FILEBROWSER_ADMIN_PASSWORD`
 
 * 游戏端口: 没有提供修改项，反正这个放在Docker内你端口是随便映射的，默认就是`16261`跟`16262`，追求开箱即用。
 

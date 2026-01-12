@@ -66,7 +66,7 @@ if [ -d "/certs" ]; then
     chmod -R 755 /certs 2>/dev/null || echo "提示: /certs 目录是只读的，跳过权限修改。"
 fi
 
-# --- 初始化 FileBroswer ---
+# --- 初始化 FILEBROWSER ---
 echo "--- 初始化 文件浏览器(FileBrowser)变量 ---"
 FB_DIR="/opt/filebrowser"
 FB_DB="/opt/filebrowser/database.db"
@@ -93,17 +93,15 @@ if [ ! -s "$FB_DB" ]; then
     # 创建管理员 (密码长度必须 > 12)
     # 默认账号: admin
     # 默认密码: admin12345678
-    echo "设置管理员密码为: $FILEBROSWER_ADMIN_PASSWORD"
-    filebrowser users add "$FILEBROSWER_ADMIN_USERNAME" "$FILEBROSWER_ADMIN_PASSWORD" --perm.admin -d "$FB_DB"
+    echo "设置管理员密码为: $FILEBROWSER_ADMIN_PASSWORD"
+    filebrowser users add "$FILEBROWSER_ADMIN_USERNAME" "$FILEBROWSER_ADMIN_PASSWORD" --perm.admin -d "$FB_DB"
     echo "--- 给予 FileBrowser 数据库权限 ---"
     chown -R steam:steam "$FB_DIR"
     chmod 644 "$FB_DB" 2>/dev/null || true
 else
     echo "--- FileBrowser 数据库已存在，跳过初始化 ---"
 fi
-# --- 结束 初始化 FileBroswer ---
-
-
+# --- 结束 初始化 FILEBROWSER ---
 
 # 打印HTTPS预备信息
 if [ "$SSL_MODE" = "cloudflare" ]; then
@@ -262,7 +260,7 @@ append_proxy_locations() {
     # 注入认证配置
     if [ -n "$auth_config" ]; then
         echo "        $auth_config" >> "$conf_file"
-    fi
+    fi  
     
     echo "        proxy_pass http://127.0.0.1:10888;" >> "$conf_file"
     echo "        proxy_set_header Host \$host;" >> "$conf_file"
@@ -280,10 +278,11 @@ append_proxy_locations() {
     echo "    }" >> "$conf_file"
 }
 
-# 生成密码文件
+echo "--- 清理 Nginx 默认配置 ---"
+rm -f /etc/nginx/conf.d/default.conf /etc/nginx/sites-enabled/default
+# 生成Nginx密码文件
 setup_nginx_auth
-
-# 执行逻辑
+# 执行Nginx初始化
 setup_ssl
 
 # 创建日志文件，防止启动时报错
