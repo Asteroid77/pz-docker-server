@@ -92,7 +92,7 @@ cd pz-docker-server
 | `PZ_WEB_ACCOUNT`          | `pz`                            | **Nginx 基本认证用户名**。<br>用于保护 Web 管理面板的入口安全。 |
 | `PZ_WEB_PASSWORD`         | `pzPassword123`                 | **Nginx 基本认证密码**。                                     |
 | `PZ_SETTING_WEB_REPO`     | `Asteroid77/pz-web-backend`     | 面板依赖的仓库，你可以自行fork然后在此基础上修改，使用自己的Web面板。 |
-| `PZ_WEB_BACKEND_FILENAME` | `pz-web-backend_linux_amd64Web` | 面板的文件名，根据这个检测最新的面板二进制文件。             |
+| `PZ_WEB_BACKEND_FILENAME` | `pz-web-backend-linux-amd64Web` | 面板的文件名，根据这个检测最新的面板二进制文件。             |
 
 #### 🌐 DDNS-GO（DDNS-GO Settings)
 
