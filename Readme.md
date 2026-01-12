@@ -40,6 +40,8 @@ cd pz-docker-server
 
 在使用 `docker-compose up` 启动之前，请复制 `.env.example` 为 `.env` 并根据你的需求修改以下配置。
 
+
+
 #### 📦 基础配置 (Basic)
 
 | 变量名                       | 默认值                | 说明                                                         |
@@ -47,21 +49,20 @@ cd pz-docker-server
 | `CONTAINER_NAME`             | `pz-automated-server` | Docker 容器的名称。                                          |
 | `PORT_GAME_UDP`              | `16261`               | **主游戏端口 (UDP)**。玩家连接服务器时填写的端口。           |
 | `PORT_GAME_HANDSHAKE`        | `16262`               | **握手端口 (UDP)**。用于 Steam 查询和直连。                  |
-| `PORT_FILEBROWSER_EXT`       | `35088`               | **文件管理器端口**。用于直接访问 FileBrowser（如不走 Nginx）。 |
-| `PORT_GAME_SETTING_EXT`      | `10888`               | **Web 面板端口**。用于直接访问配置管理后台（如不走 Nginx）。 |
-| `FILEBROWSER_ADMIN_USERNAME` | `pzFileAdmin`         | FileBrowser 的默认管理员用户名。                             |
-| `FILEBROWSER_ADMIN_PASSWORD` | `Adminadmin123`       | FileBrowser 的默认管理员密码。<br>⚠️ **注意**：必须 **>8位** 且包含字母数字，足够复杂，否则服务会启动失败。 |
+| `PORT_GAME_SETTING_EXT`      | `10888`               | **Web 面板端口**，默认为游戏配置，/filebrowser路径为文件管理。 |
+| `FILEBROWSER_ADMIN_USERNAME` | `pzFileAdmin`         | **FileBrowser** 的默认管理员用户名。                         |
+| `FILEBROWSER_ADMIN_PASSWORD` | `Adminadmin123`       | **FileBrowser** 的默认管理员密码。<br>⚠️ **注意**：必须 **>8位** 且包含字母数字，足够复杂，否则服务会启动失败。 |
 
 #### 🛠️ 构建与网络 (Build & Network)
 
-| 变量名                | 默认值                             | 说明                                                         |
-| :-------------------- | :--------------------------------- | :----------------------------------------------------------- |
-| `PROXY_URL`           | `http://host.docker.internal:7890` | **HTTP 代理地址**。<br>用于加速 Docker 构建过程中的 SteamCMD 下载。<br>• **Windows/Mac**: `http://host.docker.internal:7890`<br>• **Linux**: 请填写宿主机局域网 IP (如 `192.168.1.5:7890`) |
-| `USE_CN_MIRROR`       | `true`                             | 是否使用国内镜像源加速 `apt-get` 安装。<br>`true` = 使用阿里云源；`false` = 使用官方源。 |
-| GITHUB_PROXY_URL      | https://ghfast.top/                | 配置GitHub专用加速前缀                                       |
-| DNS_SERVER_1          | 223.5.5.5                          | 容器内使用的DNS组1，此为阿里云的DNS，非国内构建无需填写。    |
-| DNS_SERVER_2          | 119.29.29.29                       | 容器内使用的DNS组2，此为腾讯云的DNS，非国内构建无需填写。    |
-| STEAMCMD_CN_MIRROR_ID | 10                                 | Steam地区设置：<br />• 上海: 44 <br />• 北京: 23 <br />• 成都: 45 <br />• 广州: 43 <br />• 天津：47（完美世界机房）<br />• 新加坡：10<br />• 香港：11 |
+| 变量名                  | 默认值                             | 说明                                                         |
+| :---------------------- | :--------------------------------- | :----------------------------------------------------------- |
+| `PROXY_URL`             | `http://host.docker.internal:7890` | **HTTP 代理地址**。<br>用于加速 Docker 构建过程中的 SteamCMD 下载。<br>• **Windows/Mac**: `http://host.docker.internal:7890`<br>• **Linux**: 请填写宿主机局域网 IP (如 `192.168.1.5:7890`) |
+| `USE_CN_MIRROR`         | `true`                             | 是否使用国内镜像源加速 `apt-get` 安装。<br>`true` = 使用阿里云源；`false` = 使用官方源。 |
+| `GITHUB_PROXY_URL`      | `https://ghfast.top/`              | 配置GitHub专用加速前缀                                       |
+| `DNS_SERVER_1`          | `223.5.5.5`                        | 容器内使用的DNS组1，此为阿里云的DNS，非国内构建无需填写。    |
+| `DNS_SERVER_2`          | `119.29.29.29`                     | 容器内使用的DNS组2，此为腾讯云的DNS，非国内构建无需填写。    |
+| `STEAMCMD_CN_MIRROR_ID` | `10`                               | Steam地区设置：<br />• **上海**: `44` <br />• **北京**: `23` <br />• **成都**: `45` <br />• **广州**: `43` <br />• **天津**：`47`（完美世界机房）<br />• **新加坡**：`10`<br />• **香港**：`11` |
 
 #### 🔒 安全与 HTTPS (SSL/TLS)
 
@@ -83,13 +84,13 @@ cd pz-docker-server
 
 #### 🎮 游戏配置 (Game Settings)
 
-| 变量名                  | 默认值                        | 说明                                                         |
-| :---------------------- | :---------------------------- | :----------------------------------------------------------- |
-| `PZ_BRANCH`             | `public`                      | **游戏分支版本**。<br>• `public` / `latest`: 稳定版 (Build 41.78+)。<br>• `unstable` / `42.x.x`: 测试版 (Build 42)。 |
-| `PZ_WEB_ACCOUNT`        | `pz`                          | **Nginx 基本认证用户名**。<br>用于保护 Web 管理面板的入口安全。 |
-| `PZ_WEB_PASSWORD`       | `pzPassword123`               | **Nginx 基本认证密码**。                                     |
-| PZ_SETTING_WEB_REPO     | Asteroid77/pz-web-backend     | 面板依赖的仓库，你可以自行fork然后在此基础上修改，使用自己的Web面板。 |
-| PZ_WEB_BACKEND_FILENAME | pz-web-backend_linux_amd64Web | 面板的文件名，根据这个检测最新的面板二进制文件。             |
+| 变量名                    | 默认值                          | 说明                                                         |
+| :------------------------ | :------------------------------ | :----------------------------------------------------------- |
+| `PZ_BRANCH`               | `public`                        | **游戏分支版本**。<br>• `public` / `latest`: 稳定版 (Build 41.78+)。<br>• `unstable` / `42.x.x`: 测试版 (Build 42)。 |
+| `PZ_WEB_ACCOUNT`          | `pz`                            | **Nginx 基本认证用户名**。<br>用于保护 Web 管理面板的入口安全。 |
+| `PZ_WEB_PASSWORD`         | `pzPassword123`                 | **Nginx 基本认证密码**。                                     |
+| `PZ_SETTING_WEB_REPO`     | `Asteroid77/pz-web-backend`     | 面板依赖的仓库，你可以自行fork然后在此基础上修改，使用自己的Web面板。 |
+| `PZ_WEB_BACKEND_FILENAME` | `pz-web-backend_linux_amd64Web` | 面板的文件名，根据这个检测最新的面板二进制文件。             |
 
 ### 2.4 构建与启动
 
@@ -141,18 +142,16 @@ docker-compsoe up -d
 
 > 开启了HTTPS跟没开启HTTPS访问的前缀不一样，这里以HTTPS为例。
 
-* Web管理面板（修改僵毁Server.ini/SandboxVar.lua，重启服务器，更新服务器，模组增删改）
-
-  * 地址: https://你的域名 (或 https://服务器IP)
+* **Web管理面板**（修改僵毁Server.ini/SandboxVar.lua，重启服务器，更新服务器，模组增删改）
+  * 地址: https://你的域名 (或 https://服务器IP:设置的端口)
 
   * 安全验证：浏览器会弹出登录框（Nginx Basic Auth），懒得单独给这玩意儿写权限。
 
   * 用户名：`.env`中的`PZ_WEB_ACCOUNT`
   * 密码：`.env`中的`PZ_WEB_PASSWORD`
 
-* FileBrowser文件管理器（僵毁游戏文件管理，在你不满意Web管理面板时使用，简单地说就是上传 Mods、备份 Saves 文件夹、查看 pz-stdout.log 日志）
-
-  * 地址： https://你的域名/file (或 https://服务器IP/file)
+* **FileBrowser文件管理器**（僵毁游戏文件管理，在你不满意Web管理面板时使用，简单地说就是上传 Mods、备份 Saves 文件夹、查看 pz-stdout.log 日志）
+  * 地址： https://你的域名/filebrowser (或 https://服务器IP:设置的端口/filebrowser)
   * 安全验证：自带有一套权限系统
   * 用户：`.env` 中的 `FILEBROWSER_ADMIN_USERNAME`
   * 密码：`.env`中的`FILEBROWSER_ADMIN_PASSWORD`
@@ -193,9 +192,9 @@ docker-compsoe up -d
 
 如果需要强制重置：
 
-`FileBrowser`: 删除 ./data/filebrowser/database.db 然后重启。
+`FileBrowser`: 删除 `./data/filebrowser/database.db` 然后重启。
 
-`Web 设置面板`: 删除容器内的 /etc/nginx/.htpasswd (或进入容器执行 rm /etc/nginx/.htpasswd) 然后重启。
+`Web 设置面板`: 删除容器内的 `/etc/nginx/.htpasswd` (或进入容器执行 `rm /etc/nginx/.htpasswd`) 然后重启。
 
 ### Q5: Web配置面板问题
 
@@ -203,7 +202,7 @@ docker-compsoe up -d
 
 有什么问题可以去那边提。
 
-如果你科学上网工具质量不太好，经常触发`Github`的风控，想要更新新版的面板，可以直接从面板仓库那边的Release中下载build好的版本放到`data/web-backend`下面自行更名替换，也可以改了后自己编译自己替换。
+如果你科学上网工具质量不太好，经常触发`Github`的风控，想要更新新版的面板，可以直接从面板仓库那边的`Release`中下载build好的版本放到`data/web-backend`下面自行更名替换，也可以改了后自己编译自己替换。
 
 ## 📝 4. License
 
