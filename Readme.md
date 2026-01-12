@@ -54,10 +54,14 @@ cd pz-docker-server
 
 #### 🛠️ 构建与网络 (Build & Network)
 
-| 变量名          | 默认值                             | 说明                                                         |
-| :-------------- | :--------------------------------- | :----------------------------------------------------------- |
-| `PROXY_URL`     | `http://host.docker.internal:7890` | **HTTP 代理地址**。<br>用于加速 Docker 构建过程中的 SteamCMD 下载。<br>• **Windows/Mac**: `http://host.docker.internal:7890`<br>• **Linux**: 请填写宿主机局域网 IP (如 `192.168.1.5:7890`) |
-| `USE_CN_MIRROR` | `true`                             | 是否使用国内镜像源加速 `apt-get` 安装。<br>`true` = 使用阿里云源；`false` = 使用官方源。 |
+| 变量名                | 默认值                             | 说明                                                         |
+| :-------------------- | :--------------------------------- | :----------------------------------------------------------- |
+| `PROXY_URL`           | `http://host.docker.internal:7890` | **HTTP 代理地址**。<br>用于加速 Docker 构建过程中的 SteamCMD 下载。<br>• **Windows/Mac**: `http://host.docker.internal:7890`<br>• **Linux**: 请填写宿主机局域网 IP (如 `192.168.1.5:7890`) |
+| `USE_CN_MIRROR`       | `true`                             | 是否使用国内镜像源加速 `apt-get` 安装。<br>`true` = 使用阿里云源；`false` = 使用官方源。 |
+| GITHUB_PROXY_URL      | https://ghfast.top/                | 配置GitHub专用加速前缀                                       |
+| DNS_SERVER_1          | 223.5.5.5                          | 容器内使用的DNS组1，此为阿里云的DNS，非国内构建无需填写。    |
+| DNS_SERVER_2          | 119.29.29.29                       | 容器内使用的DNS组2，此为腾讯云的DNS，非国内构建无需填写。    |
+| STEAMCMD_CN_MIRROR_ID | 10                                 | Steam地区设置：<br />• 上海: 44 <br />• 北京: 23 <br />• 成都: 45 <br />• 广州: 43 <br />• 天津：47（完美世界机房）<br />• 新加坡：10<br />• 香港：11 |
 
 #### 🔒 安全与 HTTPS (SSL/TLS)
 
@@ -79,11 +83,13 @@ cd pz-docker-server
 
 #### 🎮 游戏配置 (Game Settings)
 
-| 变量名            | 默认值          | 说明                                                         |
-| :---------------- | :-------------- | :----------------------------------------------------------- |
-| `PZ_BRANCH`       | `public`        | **游戏分支版本**。<br>• `public` / `latest`: 稳定版 (Build 41.78+)。<br>• `unstable` / `42.x.x`: 测试版 (Build 42)。 |
-| `PZ_WEB_ACCOUNT`  | `pz`            | **Nginx 基本认证用户名**。<br>用于保护 Web 管理面板的入口安全。 |
-| `PZ_WEB_PASSWORD` | `pzPassword123` | **Nginx 基本认证密码**。                                     |
+| 变量名                  | 默认值                        | 说明                                                         |
+| :---------------------- | :---------------------------- | :----------------------------------------------------------- |
+| `PZ_BRANCH`             | `public`                      | **游戏分支版本**。<br>• `public` / `latest`: 稳定版 (Build 41.78+)。<br>• `unstable` / `42.x.x`: 测试版 (Build 42)。 |
+| `PZ_WEB_ACCOUNT`        | `pz`                          | **Nginx 基本认证用户名**。<br>用于保护 Web 管理面板的入口安全。 |
+| `PZ_WEB_PASSWORD`       | `pzPassword123`               | **Nginx 基本认证密码**。                                     |
+| PZ_SETTING_WEB_REPO     | Asteroid77/pz-web-backend     | 面板依赖的仓库，你可以自行fork然后在此基础上修改，使用自己的Web面板。 |
+| PZ_WEB_BACKEND_FILENAME | pz-web-backend_linux_amd64Web | 面板的文件名，根据这个检测最新的面板二进制文件。             |
 
 ### 2.4 构建与启动
 
