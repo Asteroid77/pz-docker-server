@@ -9,31 +9,35 @@ echo "模式: SSL_MODE=$SSL_MODE"
 echo "域名: DOMAIN_NAME=$DOMAIN_NAME"
 
 smart_chown() {
-    local target="$1"
-    local user="steam"
+    local path="$1"
+    local owner="$2"
     
-    if [ ! -d "$target" ]; then
+    # 检查目录是否存在
+    if [ ! -d "$path" ]; then
+        echo "目录不存在，跳过权限检查: $path"
         return
     fi
 
-    # 获取目标目录当前的所有者
-    current_owner=$(stat -c '%U' "$target")
+    # 获取当前所有者
+    local current_owner=$(stat -c '%U' "$path")
 
-    # 只有当所有者不是 steam 时，才执行耗时的递归修改
-    if [ "$current_owner" != "$user" ]; then
-        echo "修复权限: $target (正在执行 chown -R，请耐心等待...)"
-        chown -R "$user:$user" "$target"
+    # 如果所有者不匹配，则执行修复
+    if [ "$current_owner" != "$owner" ]; then
+        echo "权限不匹配: $path (当前: $current_owner, 期望: $owner)。正在修复..."
+        # -R 是必须的，因为 Docker 可能创建了多层 root 权限的目录
+        chown -R "$owner:$owner" "$path"
     else
-        echo "权限正确: $target (跳过检查)"
+        echo "权限正确: $path (所有者: $owner)"
     fi
 }
 
 # steam目录权限处理
-echo "正在给予文件权限..."
-# 对关键目录进行智能检查
-smart_chown "/home/steam"
-smart_chown "/opt/pzserver"
-smart_chown "/opt/filebrowser"
+echo "--- 正在给予默认的steam用户目录权限... ---"
+smart_chown /home/steam/Zomboid "steam"
+smart_chown /home/steam/Steam "steam"
+smart_chown /opt/pzserver "steam"
+smart_chown /opt/filebrowser "steam"
+smart_chown /opt/pz-web-backend "steam" 
 
 
 # --- 初始化 Web 配置面板 ---

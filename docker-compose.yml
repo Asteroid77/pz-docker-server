@@ -75,8 +75,8 @@ services:
       # Web 后端的数据目录
       - ./data/web-backend:/opt/pz-web-backend
 
-      # Steam持久化，主要是登录缓存的持久化，这样只需要忍受第一次登录流程，后续直接拿着config/loginusers.vdf握手
-      - ./data/steamcmd_config:/home/steam/Steam
+      # Steam持久化，主要是登录缓存的持久化，这样只需要忍受第一次登录流程，后续直接拿着config/config.vdf握手
+      - ./data/steam:/home/steam/Steam
 
       # 映射宿主机的 ./certs 目录到容器内的 /certs
       # 注意，该目录下应包含 cert.pem 和 key.pem 这样的证书文件。
