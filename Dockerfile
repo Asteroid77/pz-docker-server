@@ -104,9 +104,15 @@ RUN ARCH=$(dpkg --print-architecture) && \
 
 # 用户与目录
 RUN useradd -m -d /home/steam -s /bin/bash steam && \
+    # 创建steamcmd目录
     mkdir -p /home/steam/steamcmd && \
+    # 创建Steam目录
+    mkdir -p /home/steam/Steam && \
+    # 创建僵毁服务器目录
     mkdir -p ${PZ_INSTALL_DIR} && \
+    # 创建 supervisor日志目录
     mkdir -p /var/log/supervisor && \
+    # 创建证书存放目录
     mkdir -p /certs && \
     # 创建 FileBrowser 数据库专用目录
     mkdir -p /opt/filebrowser && \
