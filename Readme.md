@@ -71,6 +71,8 @@ cd pz-docker-server
 > ⚠️注意，请确定你提供的参数**正确无误**，申请证书是有频率限制的！
 >
 > 如果查看服务器启动日志时发现被证书机构拒绝，请你自行在你的电脑上面通过`win.acme`或者`acme.sh`之类的工具自行解决后把申请到的证书扔在`cert`文件夹内即可。
+>
+> **如果你没有公网IP，这一段可以略过，直接走内网穿透即可。**
 
 | 变量名          | 默认值      | 说明                                                         |
 | :-------------- | :---------- | :----------------------------------------------------------- |
@@ -92,9 +94,16 @@ cd pz-docker-server
 | `PZ_SETTING_WEB_REPO`     | `Asteroid77/pz-web-backend`     | 面板依赖的仓库，你可以自行fork然后在此基础上修改，使用自己的Web面板。 |
 | `PZ_WEB_BACKEND_FILENAME` | `pz-web-backend_linux_amd64Web` | 面板的文件名，根据这个检测最新的面板二进制文件。             |
 
+#### 🌐 DDNS-GO（DDNS-GO Settings)
+
+| 变量名              | 默认值 | 说明                   |
+| ------------------- | ------ | ---------------------- |
+| `PORT_DDNS_GO`      | `9876` | ddns-go暴露的端口      |
+| `FREQUENCY_DDNS_GO` | `30`   | 单位秒，代表检测的频率 |
+
 ### 2.4 构建与启动
 
-> ⚠️请开启代理的TUN模式，否则Steam无法走设置代理的更新会让你比较痛苦。
+> ⚠️如果设置了代理，请开启代理的TUN模式
 
 ```bash
 #先构建属于你自己的images
@@ -130,10 +139,16 @@ docker-compsoe up -d
 ├── data/
 │   ├── game/               # 游戏本体安装目录 (避免每次重启重新下载)
 │   ├── zomboid/            # 核心数据：地图存档、配置文件(Server/)、数据库(db/)
-│   ├── filebrowser/        # FileBrowser 的数据库文件
+│   ├── steam/              # Steam数据存放（主要是缓存登录凭证）
+| 	├── filebrowser/        # 文件管理器（不满意Web管理面板功能时使用）
+| 	├── ddns-go/            # ddns-go的目录
 │   └── web-backend/        # Web管理面板的二进制文件及缓存数据
-├── scripts/                # 启动脚本
-└── docker-compose.yml
+├── entrypoint.sh           # 初始化脚本
+├── start-pz.sh             # 僵毁服务器初始化脚本
+├── supervisord.conf        # supervisord多任务管理配置
+├── Dockerfile              # 构建docker的配置
+├── .env              		# 设置
+└── docker-compose.yml      # 启动容器的配置
 ```
 
 ### 2.5 📖 访问与使用
@@ -149,12 +164,23 @@ docker-compsoe up -d
 
   * 用户名：`.env`中的`PZ_WEB_ACCOUNT`
   * 密码：`.env`中的`PZ_WEB_PASSWORD`
-
 * **FileBrowser文件管理器**（僵毁游戏文件管理，在你不满意Web管理面板时使用，简单地说就是上传 Mods、备份 Saves 文件夹、查看 pz-stdout.log 日志）
   * 地址： https://你的域名/filebrowser (或 https://服务器IP:设置的端口/filebrowser)
   * 安全验证：自带有一套权限系统
   * 用户：`.env` 中的 `FILEBROWSER_ADMIN_USERNAME`
   * 密码：`.env`中的`FILEBROWSER_ADMIN_PASSWORD`
+* **[DDNS-GO](https://github.com/jeessy2/ddns-go)**（动态家宽IP绑定域名，字面意思，家庭宽带会因为拨号而变更IP，其作用就是不停轮询IP网站询问自己的公网IP）
+  * 地址：localhost:9876(默认端口)
+  * 用户名：第一次启动会让你自己设置
+  * 密码：同上
+  * Token: `.env`中的`CF_TOKEN`
+  * TTL: 自动（默认）
+  * IPV4
+    * 是否启用-启用
+    * 通过接口获取
+    * domains - 输入你的域名，可以同HTTPS设置的一样，也可以自己多建个子域名。
+  * 其它
+    * 禁止公网访问：禁止（建议）
 
 * 游戏端口: 没有提供修改项，反正这个放在Docker内你端口是随便映射的，默认就是`16261`跟`16262`，追求开箱即用。
 

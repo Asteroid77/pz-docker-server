@@ -86,3 +86,27 @@ services:
 
     # --- 重启策略 ---
     restart: unless-stopped
+  ddns-go:
+    # --- DDNS-GO 服务 ---
+    # 作用：自动更新域名解析，将域名指向家庭网络的动态公网IP。
+    container_name: ddns-go
+    # command: "-l :9876 -f 300" # 每 300 秒(5分钟)检查一次
+    command: -f ${FREQUENCY_DDNS_GO}
+    image: ghcr.io/jeessy2/ddns-go:latest
+    
+    # --- 重启策略 ---
+    restart: unless-stopped
+    
+    # --- 端口映射 ---
+    # 暴露 ddns-go 的 Web UI 配置界面
+    ports:
+      - "${PORT_DDNS_GO}:9876"
+
+    # --- 卷挂载 ---
+    # 将容器内的配置目录持久化到宿主机，防止容器重启后配置丢失
+    volumes:
+      - ./data/ddns-go:/root
+
+    # --- 环境变量 ---
+    environment:
+      - TZ=Asia/Shanghai
