@@ -5,8 +5,6 @@ PZ_INSTALL_DIR="/opt/pzserver"
 STEAMCMD_DIR="/home/steam/steamcmd"
 
 echo "--- 容器启动初始化 ---"
-echo "模式: SSL_MODE=$SSL_MODE"
-echo "域名: DOMAIN_NAME=$DOMAIN_NAME"
 
 smart_chown() {
     local path="$1"
@@ -63,13 +61,6 @@ fi
 chown -R steam:steam "$WEB_DIR"
 chmod +x "$WEB_BIN"
 
-
-# 证书目录权限处理
-if [ -d "/certs" ]; then
-    # 尝试修改权限，但如果失败（例如只读挂载），不要退出脚本
-    chmod -R 755 /certs 2>/dev/null || echo "提示: /certs 目录是只读的，跳过权限修改。"
-fi
-
 # --- 初始化 FILEBROWSER ---
 echo "--- 初始化 文件浏览器(FileBrowser)变量 ---"
 FB_DIR="/opt/filebrowser"
@@ -107,87 +98,7 @@ else
 fi
 # --- 结束 初始化 FILEBROWSER ---
 
-# 打印HTTPS预备信息
-if [ "$SSL_MODE" = "cloudflare" ]; then
-    if [ -z "$CF_Token" ]; then
-        echo "警告: SSL模式为 Cloudflare 但未检测到 CF_Token"
-    else
-        echo "Cloudflare Token 已加载 (掩码处理: ${CF_Token:0:5}******)"
-    fi
-fi
-
-setup_ssl() {
-    echo "--- [HTTPS] 初始化 SSL 配置 (当前模式: $SSL_MODE) ---"
-    
-    # 约定好最终使用的证书文件名
-    FINAL_CERT="$SSL_PATH/$SSL_CERT"
-    FINAL_KEY="$SSL_PATH/$SSL_KEY"
-
-    # 是否准备好 HTTPS
-    SSL_READY="false"
-
-    # ============================================
-    # 检查是否已有证书
-    # ============================================
-    if [ -s "$FINAL_CERT" ] && [ -s "$FINAL_KEY" ]; then
-        echo "✅ 检测到 /certs 目录下已存在证书文件，跳过申请步骤。"
-        echo "   -> 直接使用现有证书。"
-        SSL_READY="true"
-    else
-        echo "ℹ️  /certs 目录下未找到完整证书，进入申请/生成流程..."
-        
-        # ============================================
-        # 根据模式处理
-        # ============================================
-        
-        # --- 模式 A: Cloudflare 自动申请 ---
-        if [ "$SSL_MODE" = "cloudflare" ]; then
-            echo "--- 正在使用 Cloudflare API 申请证书 ---"
-            
-            # 校验参数
-            if [ -z "$CF_Token" ] || [ -z "$DOMAIN_NAME" ] || [ -z "$CF_Account_ID" ]; then
-                echo "❌ 错误: 缺少 CF_Token/DOMAIN_NAME/CF_Account_ID，无法申请。回退到 HTTP 模式。"
-            else
-                # 导入环境变量
-                export CF_Token="$CF_Token"
-                export CF_Account_ID="$CF_Account_ID"
-                # 申请证书 (如果失败不要退出脚本，而是回退 HTTP)
-                if /root/.acme.sh/acme.sh --issue --server letsencrypt --dns dns_cf -d "$DOMAIN_NAME"; then
-                    # 安装证书到 /certs
-                    echo "--- 申请成功，正在安装证书到 /certs ---"
-                    /root/.acme.sh/acme.sh --install-cert -d "$DOMAIN_NAME" \
-                        --key-file       "$FINAL_KEY"  \
-                        --fullchain-file "$FINAL_CERT" \
-                        --reloadcmd     "nginx -s reload"
-                    
-                    if [ -s "$FINAL_CERT" ]; then
-                        echo "✅ 证书已保存到挂载目录。"
-                        SSL_READY="true"
-                    fi
-                else
-                    echo "❌ 证书申请失败，请检查 Cloudflare Token 或网络。"
-                fi
-            fi
-        
-        # --- 模式 B: Custom 自定义 ---
-        elif [ "$SSL_MODE" = "custom" ]; then
-             # 用户选择了 custom 但没把文件放对位置
-             echo "❌ 模式为 custom 但 $SSL_PATH 下没找到 $SSL_CERT 以及 $SSL_KEY。"
-             echo "   请将证书文件重命名并放入当前挂载Docker-Compose下的 ./certs 目录。"
-        fi
-    fi
-
-    # ============================================
-    #  生成 Nginx 配置
-    # ============================================
-    if [ "$SSL_READY" = "true" ]; then
-        echo "🚀 启用 HTTPS (443) + HTTP 跳转"
-        generate_nginx_config "on" "$FINAL_CERT" "$FINAL_KEY"
-    else
-        echo "⚠️  未满足 HTTPS 条件，仅启用 HTTP (80)"
-        generate_nginx_config "off" "" ""
-    fi
-}
+# Nginx密钥生成
 setup_nginx_auth() {
     # 环境变量中定义的用户名和密码
     local user="$PZ_WEB_ACCOUNT"
@@ -286,7 +197,95 @@ echo "--- 清理 Nginx 默认配置 ---"
 rm -f /etc/nginx/conf.d/default.conf /etc/nginx/sites-enabled/default
 # 生成Nginx密码文件
 setup_nginx_auth
-# 执行Nginx初始化
+echo "模式: SSL_MODE=$SSL_MODE"
+echo "域名: DOMAIN_NAME=$DOMAIN_NAME"
+# 证书目录权限处理
+if [ -d "/certs" ]; then
+    # 尝试修改权限，但如果失败（例如只读挂载），不要退出脚本
+    chmod -R 755 /certs 2>/dev/null || echo "提示: /certs 目录是只读的，跳过权限修改。"
+fi
+# 打印HTTPS预备信息
+if [ "$SSL_MODE" = "cloudflare" ]; then
+    if [ -z "$CF_Token" ]; then
+        echo "警告: SSL模式为 Cloudflare 但未检测到 CF_Token"
+    else
+        echo "Cloudflare Token 已加载 (掩码处理: ${CF_Token:0:5}******)"
+    fi
+fi
+
+setup_ssl() {
+    echo "--- [HTTPS] 初始化 SSL 配置 (当前模式: $SSL_MODE) ---"
+    
+    # 约定好最终使用的证书文件名
+    FINAL_CERT="$SSL_PATH/$SSL_CERT"
+    FINAL_KEY="$SSL_PATH/$SSL_KEY"
+
+    # 是否准备好 HTTPS
+    SSL_READY="false"
+
+    # ============================================
+    # 检查是否已有证书
+    # ============================================
+    if [ -s "$FINAL_CERT" ] && [ -s "$FINAL_KEY" ]; then
+        echo "✅ 检测到 /certs 目录下已存在证书文件，跳过申请步骤。"
+        echo "   -> 直接使用现有证书。"
+        SSL_READY="true"
+    else
+        echo "ℹ️  /certs 目录下未找到完整证书，进入申请/生成流程..."
+        
+        # ============================================
+        # 根据模式处理
+        # ============================================
+        
+        # --- 模式 A: Cloudflare 自动申请 ---
+        if [ "$SSL_MODE" = "cloudflare" ]; then
+            echo "--- 正在使用 Cloudflare API 申请证书 ---"
+            
+            # 校验参数
+            if [ -z "$CF_Token" ] || [ -z "$DOMAIN_NAME" ] || [ -z "$CF_Account_ID" ]; then
+                echo "❌ 错误: 缺少 CF_Token/DOMAIN_NAME/CF_Account_ID，无法申请。回退到 HTTP 模式。"
+            else
+                # 导入环境变量
+                export CF_Token="$CF_Token"
+                export CF_Account_ID="$CF_Account_ID"
+                # 申请证书 (如果失败不要退出脚本，而是回退 HTTP)
+                if /root/.acme.sh/acme.sh --issue --server letsencrypt --dns dns_cf -d "$DOMAIN_NAME"; then
+                    # 安装证书到 /certs
+                    echo "--- 申请成功，正在安装证书到 /certs ---"
+                    /root/.acme.sh/acme.sh --install-cert -d "$DOMAIN_NAME" \
+                        --key-file       "$FINAL_KEY"  \
+                        --fullchain-file "$FINAL_CERT" \
+                        --reloadcmd     "nginx -s reload"
+                    
+                    if [ -s "$FINAL_CERT" ]; then
+                        echo "✅ 证书已保存到挂载目录。"
+                        SSL_READY="true"
+                    fi
+                else
+                    echo "❌ 证书申请失败，请检查 Cloudflare Token 或网络。"
+                fi
+            fi
+        
+        # --- 模式 B: Custom 自定义 ---
+        elif [ "$SSL_MODE" = "custom" ]; then
+             # 用户选择了 custom 但没把文件放对位置
+             echo "❌ 模式为 custom 但 $SSL_PATH 下没找到 $SSL_CERT 以及 $SSL_KEY。"
+             echo "   请将证书文件重命名并放入当前挂载Docker-Compose下的 ./certs 目录。"
+        fi
+    fi
+
+    # ============================================
+    #  生成 Nginx 配置
+    # ============================================
+    if [ "$SSL_READY" = "true" ]; then
+        echo "🚀 启用 HTTPS (443) + HTTP 跳转"
+        generate_nginx_config "on" "$FINAL_CERT" "$FINAL_KEY"
+    else
+        echo "⚠️  未满足 HTTPS 条件，仅启用 HTTP (80)"
+        generate_nginx_config "off" "" ""
+    fi
+}
+# 执行Https以及Nginx初始化
 setup_ssl
 
 # 创建日志文件，防止启动时报错
