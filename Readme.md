@@ -3,8 +3,14 @@
 这是一个自用的《僵尸毁灭工程》(Project Zomboid)  Docker 服务端方案。
 
 > ⚠️ 注意：
+> 
 > 如果你想在`Windows`上面跑，请参考[我的博文查看Windows下更好的糊糊工程](https://blog.astro777.cfd/posts/games/windows-project-zomboid-server-automation/)
-> 不要在`WSL2`+Docker跑该方案，WSL2收发UDP简直就是场灾难，网络模式我从`Mirrored`->`NAT`->`Host`->`Bridge`->`Mirrored`试了一圈，将容器的MTU往下调整（默认1500，我自己是1452，给的是1350），关掉容器内网卡的`tx-checksumming`（`WSL2`低于`12字节`的`UDP`包会被忽略），最后只要公网一有流量进来大家就会一起被踢出服务器，看什么时候能`Debug`出问题给`WSL`那边提个`Issue`吧……
+> 
+> 不要在`WSL2`+Docker跑该方案，WSL2收发UDP简直就是场灾难。
+>
+> 网络模式我从`Mirrored`->`NAT`->`Host`->`Bridge`->`Mirrored`试了一圈，将容器的MTU往下调整（默认1500，我自己是1452，给的是1350），关掉容器内网卡的`tx-checksumming`（`WSL2`低于`12字节`的`UDP`包会被忽略），但都毫无效果。
+>
+> 只要公网一有流量进来大家就会一起被踢出服务器，看什么时候能`Debug`出问题给`WSL`那边提个`Issue`吧……
 
 ## ✨ 1. 功能
 
