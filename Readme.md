@@ -30,7 +30,7 @@
 
 * Docker
 * Docker Compose
-* WSL2
+* Linux (No WSL2!)
 
 ### 2.2 获取项目
 
